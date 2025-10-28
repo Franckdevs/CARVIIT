@@ -1,19 +1,58 @@
+# Configuration Nixpacks pour Laravel
+
 [phases.setup]
-nixPkgs = ["php82", "php82Extensions.pdo_mysql", "composer", "nodejs_20", "npm"]
+nixPkgs = [
+    'nodejs-18_x',
+    'php82',
+    'php82Extensions.pdo_mysql',
+    'php82Extensions.mbstring',
+    'php82Extensions.exif',
+    'php82Extensions.pcntl',
+    'php82Extensions.bcmath',
+    'php82Extensions.gd',
+    'php82Extensions.zip',
+    'php82Extensions.redis',  # Si vous utilisez Redis
+    'composer',
+    'git'
+]
 
 [phases.install]
 cmds = [
-    "composer install --no-dev --optimize-autoloader",
-    "npm install && npm run build"
-]
-
-[phases.build]
-cmds = [
-    "php artisan key:generate",
+    "composer install --no-interaction --optimize-autoloader --no-dev",
+    "php artisan storage:link",
     "php artisan config:cache",
     "php artisan route:cache",
     "php artisan view:cache"
 ]
 
+[phases.build]
+cmds = [
+    "npm ci --production",
+    "npm run production"
+]
+
 [start]
-cmd = "php artisan serve --host=0.0.0.0 --port=8000"
+cmd = "php artisan serve --host=0.0.0.0 --port=$PORT"
+
+[build.args]
+NODE_VERSION = "18.x"
+PHP_VERSION = "8.2"
+
+[build.environment]
+APP_ENV = "production"
+APP_DEBUG = "false"
+LOG_CHANNEL = "stderr"
+
+[build.env]
+NODE_ENV = "production"
+
+[build.prebuild]
+  [build.prebuild.nodejs]
+  install = ["node", "npm"]
+  
+  [build.prebuild.php]
+  install = ["composer", "php"]
+
+[build.settings]
+  [build.settings.node]
+  node-version = "18.x"
